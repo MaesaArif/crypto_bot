@@ -1,0 +1,41 @@
+Steps
+
+1. Daily python scripy (async) every 7 am and 7 pm. Grabs crypto data for 3 crypto currencies (bitcoin, eth, doge)
+    - add metadata [timestamp, batch_id (unique)] when transforming
+    - output --> 1 ndjson file per batch (filename: crypto_data_YYYY_MM_DD_BATCH7am)
+    - market data, community_data, developer_data
+
+    table_schema
+    
+    market_data
+
+    timestamp
+    batch_id
+    currrency
+    current_price
+    market_cap
+    total_volume
+
+    community_data  
+
+    "facebook_likes": 
+    "reddit_average_posts_48h": 
+    "reddit_average_comments_48h": 
+    "reddit_subscribers": 
+    "reddit_accounts_active_48h": 
+    
+      "developer_data": {
+    "forks": 36262,
+    "stars": 72871,
+    "subscribers": 3961,
+    "total_issues": 7736,
+    "closed_issues": 7377,
+    "pull_requests_merged": 11204,
+    "pull_request_contributors": 846,
+    "code_additions_deletions_4_weeks": {
+      "additions": 973,
+      "deletions": -290
+    },
+    "commit_count_4_weeks": 163
+
+2. 
