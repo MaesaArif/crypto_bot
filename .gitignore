@@ -1,1 +1,5 @@
 crypto_bot/.env
+.DS_Store
+
+# Python virtual environment
+.venv/
