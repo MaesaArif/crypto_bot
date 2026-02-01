@@ -15,7 +15,7 @@ load_dotenv()
 
 crypto_list = ["bitcoin", "ethereum", "dogecoin"]
 
-df = pd.DataFrame(
+market_data_df = pd.DataFrame(
     columns=[
         "timestamp",
         "batch_id",
@@ -58,13 +58,18 @@ for crypto in crypto_list:
     ]
     df_tmp["batch_id"] = "7AM"  # PLACEHOLDER: change to proper batch id: 7AM or 7PM
     df_tmp["crypto_id"] = data["id"]
-    df_tmp["timestamp"] = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    df_tmp["timestamp"] = datetime.now().strftime("%Y/%m/%d %H:%M")
 
-    df = pd.concat([df, df_tmp], ignore_index=True)
+    market_data_df = pd.concat([market_data_df, df_tmp], ignore_index=True)
 
-df.to_csv(f"output/crypto_data_{current_date}_BATCH_7am.csv", index=False)
-df.to_json(
-    f"output/crypto_data_{current_date}_7am.ndjson", orient="records", lines=True
+batch_name = "7AM"  # PLACEHOLDER: change to proper variable, id: 7AM or 7PM
+market_data_df.to_csv(
+    f"output/crypto_data_{current_date}_BATCH_{batch_name}.csv", index=False
+)
+market_data_df.to_json(
+    f"output/crypto_data_{current_date}_BATCH_{batch_name}.ndjson",
+    orient="records",
+    lines=True,
 )
 
 # # turn json into ndjson
