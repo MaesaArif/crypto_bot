@@ -62,8 +62,10 @@ for crypto in crypto_list:
 
     df = pd.concat([df, df_tmp], ignore_index=True)
 
-df.to_csv(f"crypto_data_{current_date}_BATCH_7am.csv", index=False)
-df.to_json(f"crypto_data_{current_date}_7am.ndjson", orient="records", lines=True)
+df.to_csv(f"output/crypto_data_{current_date}_BATCH_7am.csv", index=False)
+df.to_json(
+    f"output/crypto_data_{current_date}_7am.ndjson", orient="records", lines=True
+)
 
 # # turn json into ndjson
 # ndjson_line = json.dumps(data, ensure_ascii=False)
