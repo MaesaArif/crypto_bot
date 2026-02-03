@@ -26,7 +26,8 @@ Steps
       "reddit_average_comments_48h": string
       "reddit_subscribers": string
       "reddit_accounts_active_48h": string
-        "developer_data": {
+    
+    "developer_data": {
       "forks": 36262, string
       "stars": 72871, string
       "subscribers": 3961, string
