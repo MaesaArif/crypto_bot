@@ -4,8 +4,9 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 import argparse
-
 import pandas as pd
+
+from utils import upload_file_to_gcs
 
 
 # loading .env
@@ -136,23 +137,30 @@ def daily_api_call(crypto_list: list, batch_id: str = "7AM"):
         community_data_df = process_community_data(data, community_data_df, batch_id)
         developer_data_df = process_developer_data(data, developer_data_df, batch_id)
 
+    market_data_df_PATH = f"output/crypto_data_{current_date}_BATCH_{batch_id}.ndjson"
     market_data_df.to_json(
-        f"output/crypto_data_{current_date}_BATCH_{batch_id}.ndjson",
+        market_data_df_PATH,
         orient="records",
         lines=True,
     )
-
+    community_data_df_PATH = (
+        f"output/community_data_{current_date}_BATCH_{batch_id}.ndjson"
+    )
     community_data_df.to_json(
-        f"output/community_data_{current_date}_BATCH_{batch_id}.ndjson",
+        community_data_df_PATH,
+        orient="records",
+        lines=True,
+    )
+    developer_data_df_PATH = (
+        f"output/developer_data_{current_date}_BATCH_{batch_id}.ndjson"
+    )
+    developer_data_df.to_json(
+        developer_data_df_PATH,
         orient="records",
         lines=True,
     )
 
-    developer_data_df.to_json(
-        f"output/developer_data_{current_date}_BATCH_{batch_id}.ndjson",
-        orient="records",
-        lines=True,
-    )
+    return [market_data_df_PATH, community_data_df_PATH, developer_data_df_PATH]
 
 
 if __name__ == "__main__":
@@ -163,7 +171,12 @@ if __name__ == "__main__":
 
     crypto_list = ["bitcoin", "ethereum", "dogecoin"]
     batch_id = args.batch
-    daily_api_call(crypto_list, batch_id)
+    PATHS = daily_api_call(crypto_list, batch_id)
+
+    # TODO: upload ndjson to gcs
+    # gcs_uri = ''
+    # for path in PATHS:
+    #     upload_file_to_gcs(path, gcs_uri)
 
 
 # # turn json into ndjson

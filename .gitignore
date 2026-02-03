@@ -3,3 +3,4 @@ crypto_bot/.env
 ./output
 # Python virtual environment
 .venv/
+__pycache__/
