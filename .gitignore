@@ -1,5 +1,5 @@
 crypto_bot/.env
 .DS_Store
-
+./output
 # Python virtual environment
 .venv/
