@@ -3,6 +3,7 @@ import json
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+import argparse
 
 import pandas as pd
 
@@ -11,7 +12,7 @@ import pandas as pd
 load_dotenv()
 
 
-def process_market_data(data, df):
+def process_market_data(data, df, batch_id):
     df_tmp = pd.DataFrame()
     df_tmp["current_price"] = [
         value for value in data["market_data"]["current_price"].values()
@@ -34,7 +35,7 @@ def process_market_data(data, df):
     return market_data_df
 
 
-def process_community_data(data, df):
+def process_community_data(data, df, batch_id):
     columns = [
         "facebook_likes",
         "reddit_average_posts_48h",
@@ -54,7 +55,7 @@ def process_community_data(data, df):
     return community_data_df
 
 
-def process_developer_data(data, df):
+def process_developer_data(data, df, batch_id):
     columns = [
         "forks",
         "stars",
@@ -125,15 +126,15 @@ def daily_api_call(crypto_list: list, batch_id: str = "7AM"):
         url = f"https://api.coingecko.com/api/v3/coins/{crypto}/history?date={current_date}&localization=true"
         api_key = os.getenv("COINGECKO_API_KEY")
 
-        headers = {"x-cg-api-key": "{api_key}"}
+        headers = {"x-cg-api-key": api_key}
 
         # calling api
         response = requests.get(url, headers=headers)
 
         data = response.json()
-        market_data_df = process_market_data(data, market_data_df)
-        community_data_df = process_community_data(data, community_data_df)
-        developer_data_df = process_developer_data(data, developer_data_df)
+        market_data_df = process_market_data(data, market_data_df, batch_id)
+        community_data_df = process_community_data(data, community_data_df, batch_id)
+        developer_data_df = process_developer_data(data, developer_data_df, batch_id)
 
     market_data_df.to_json(
         f"output/crypto_data_{current_date}_BATCH_{batch_id}.ndjson",
@@ -155,8 +156,13 @@ def daily_api_call(crypto_list: list, batch_id: str = "7AM"):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="7AM or 7PM")
+    parser.add_argument("--batch", type=str, default="7AM", help="7AM or 7PM")
+
+    args = parser.parse_args()
+
     crypto_list = ["bitcoin", "ethereum", "dogecoin"]
-    batch_id = "7AM"
+    batch_id = args.batch
     daily_api_call(crypto_list, batch_id)
 
 
