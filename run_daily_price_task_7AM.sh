@@ -1,4 +1,6 @@
 #!/bin/bash
+cd "$(dirname "$0")"
+echo "Running from: $(pwd)"
 
 source .venv/bin/activate
 
