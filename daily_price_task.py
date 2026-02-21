@@ -132,6 +132,11 @@ def daily_api_call(crypto_list: list, batch_id: str = "7AM"):
         # calling api
         response = requests.get(url, headers=headers)
 
+        if response.status_code != 200:
+            raise Exception(
+                f"API request failed for {crypto} with status code {response.status_code}: {response.text}"
+            )
+
         data = response.json()
         market_data_df = process_market_data(data, market_data_df, batch_id)
         community_data_df = process_community_data(data, community_data_df, batch_id)
@@ -165,7 +170,7 @@ def daily_api_call(crypto_list: list, batch_id: str = "7AM"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="7AM or 7PM")
-    parser.add_argument("--batch", type=str, default="7AM", help="7AM or 7PM")
+    parser.add_argument("--batch", type=str, default="7PM", help="7AM or 7PM")
 
     args = parser.parse_args()
 
