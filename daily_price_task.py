@@ -173,10 +173,17 @@ if __name__ == "__main__":
     batch_id = args.batch
     PATHS = daily_api_call(crypto_list, batch_id)
 
-    # TODO: upload ndjson to gcs
-    # gcs_uri = ''
-    # for path in PATHS:
-    #     upload_file_to_gcs(path, gcs_uri)
+    # upload ndjson to gcs
+    try:
+        credentials_path = "secret/discord-bot-484904-2dc07a5b046e.json"  # NOTE: hardcoded credential, use more secure method before production
+        # create new folder each day
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        gcs_uri = "gs://crypto_bot_staging/daily_call/" + current_date + "/"
+        for path in PATHS:
+            upload_file_to_gcs(path, gcs_uri, credentials_path)
+    except Exception as e:
+        print("error when uploading ndjson to GCS")
+        print(e)
 
 
 # # turn json into ndjson

@@ -4,3 +4,4 @@ crypto_bot/.env
 # Python virtual environment
 .venv/
 __pycache__/
+secret/

@@ -32,7 +32,7 @@ def upload_file_to_gcs(local_file_path, gcs_uri, credentials_path=None):
 
     Args:
         local_file_path (str): Path to the local file to upload
-        gcs_uri (str): Destination GCS URI (e.g., gs://my-bucket/path/to/file.txt)
+        gcs_uri (str): Folder destination GCS URI (e.g., gs://my-bucket/path/to/folder/)
         credentials_path (str, optional): Path to service account JSON key file
 
     Returns:
@@ -44,7 +44,9 @@ def upload_file_to_gcs(local_file_path, gcs_uri, credentials_path=None):
             raise FileNotFoundError(f"Local file not found: {local_file_path}")
 
         # Parse the GCS URI
-        bucket_name, blob_name = parse_gcs_uri(gcs_uri)
+        bucket_name, blob_name = parse_gcs_uri(
+            gcs_uri + os.path.basename(local_file_path)
+        )
 
         if not blob_name:
             raise ValueError("GCS URI must include a blob name (path after bucket)")
@@ -71,3 +73,10 @@ def upload_file_to_gcs(local_file_path, gcs_uri, credentials_path=None):
     except Exception as e:
         print(f"Error uploading file: {str(e)}")
         return False
+
+
+if __name__ == "__main__":
+    gcs_uri = "gs://crypto_bot_staging/daily_call/"
+    path = "output/crypto_data_2026-02-01_BATCH_7AM.csv"
+    credentials_path = "secret/discord-bot-484904-2dc07a5b046e.json"  # NOTE: hardcoded credential, use more secure method (secret) before production
+    upload_file_to_gcs(path, gcs_uri, credentials_path)
