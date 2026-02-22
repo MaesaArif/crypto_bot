@@ -174,7 +174,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    crypto_list = ["bitcoin", "ethereum", "dogecoin"]
+    # crypto_list = ["bitcoin", "ethereum", "dogecoin"]
+    crypto_list = ["bitcoin", "ethereum"]
     batch_id = args.batch
     PATHS = daily_api_call(crypto_list, batch_id)
 
