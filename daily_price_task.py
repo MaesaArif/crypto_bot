@@ -133,9 +133,10 @@ def daily_api_call(crypto_list: list, batch_id: str = "7AM"):
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
-            raise Exception(
+            print(
                 f"API request failed for {crypto} with status code {response.status_code}: {response.text}"
             )
+            continue
 
         data = response.json()
         market_data_df = process_market_data(data, market_data_df, batch_id)
