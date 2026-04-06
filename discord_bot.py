@@ -80,9 +80,7 @@ async def ping(ctx):
 async def crypto(ctx, crypto_id: str = "bitcoin"):
     """Get latest crypto price data from BigQuery."""
 
-    with open(
-        "/Users/appfuxion/repo/crypto/crypto_bot/query/Discord Crypto Bot Data Pull v1.sql"
-    ) as f:
+    with open("query/Discord Crypto Bot Data Pull v1.sql") as f:
         query = f.read()
 
     await ctx.defer()
