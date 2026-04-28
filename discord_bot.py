@@ -7,6 +7,8 @@ from datetime import datetime
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
+import crypto_service
+
 load_dotenv("secret/.env")
 
 intents = discord.Intents.default()
@@ -309,6 +311,60 @@ async def list_cryptos(interaction: discord.Interaction):
     )
     embed.set_footer(text=f"Total: {len(rows)} cryptocurrencies")
     await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(
+    name="fng_bar", description="Get the Fear & Greed Index as an emoji bar."
+)
+async def fng_bar(interaction: discord.Interaction):
+    """Fear & Greed Index with Emoji Bar."""
+    await interaction.response.defer()
+    data, error = crypto_service.fear_and_greed()
+
+    if error:
+        await interaction.followup.send(f"❌ Error: {error}")
+        return
+
+    val = data.get("value", "50")
+    label = data.get("value_classification", "Neutral")
+    bar = crypto_service.get_fng_emoji_bar(val)
+
+    embed = discord.Embed(
+        title="📈 Crypto Fear & Greed Index",
+        description=f"**Value**: `{val}` ({label})\n\n{bar}",
+        color=discord.Color.dark_gold(),
+    )
+    embed.set_footer(text="Data from alternative.me")
+    await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(
+    name="fng_gauge", description="Get the Fear & Greed Index as a speedometer image."
+)
+async def fng_gauge(interaction: discord.Interaction):
+    """Fear & Greed Index with Gauge Image."""
+    await interaction.response.defer()
+    data, error = crypto_service.fear_and_greed()
+
+    if error:
+        await interaction.followup.send(f"❌ Error: {error}")
+        return
+
+    val = data.get("value", "50")
+    label = data.get("value_classification", "Neutral")
+
+    # Create the image
+    image_path = crypto_service.create_fng_gauge(val, title=f"Index: {val} ({label})")
+    file = discord.File(image_path, filename="fng_gauge.png")
+
+    embed = discord.Embed(
+        title="📈 Crypto Fear & Greed Index",
+        color=discord.Color.dark_gold(),
+    )
+    embed.set_image(url="attachment://fng_gauge.png")
+    embed.set_footer(text="Data from alternative.me")
+
+    await interaction.followup.send(file=file, embed=embed)
 
 
 if __name__ == "__main__":
