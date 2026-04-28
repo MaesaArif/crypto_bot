@@ -330,7 +330,7 @@ async def fng_bar(interaction: discord.Interaction):
     bar = crypto_service.get_fng_emoji_bar(val)
 
     embed = discord.Embed(
-        title="📈 Crypto Fear & Greed Index",
+        title="Bitcoin Fear & Greed Index",
         description=f"**Value**: `{val}` ({label})\n\n{bar}",
         color=discord.Color.dark_gold(),
     )
@@ -358,7 +358,7 @@ async def fng_gauge(interaction: discord.Interaction):
     file = discord.File(image_path, filename="fng_gauge.png")
 
     embed = discord.Embed(
-        title="📈 Crypto Fear & Greed Index",
+        title="Bitcoin Fear & Greed Index",
         color=discord.Color.dark_gold(),
     )
     embed.set_image(url="attachment://fng_gauge.png")
