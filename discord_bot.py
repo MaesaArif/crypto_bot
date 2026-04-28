@@ -67,31 +67,44 @@ def format_results(rows: list, title: str = "Query Results"):
 
 @bot.event
 async def on_ready():
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} command(s)")
+    except Exception as e:
+        print(f"Error syncing commands: {e}")
     print(f"{bot.user} has connected to Discord!")
 
 
-@bot.command(name="pingCrypto")
-async def ping(ctx):
+@bot.tree.command(name="helloworldzzz", description="Says hello!")
+async def helloworld(interaction: discord.Interaction):
+    """A hello world slash command."""
+    await interaction.response.send_message("Hello World!")
+
+
+@bot.tree.command(name="pingcrypto", description="Check if the bot is responsive.")
+async def ping(interaction: discord.Interaction):
     """Check if the bot is responsive."""
-    await ctx.send("Pong! 🏓")
+    await interaction.response.send_message("Pong! 🏓")
 
 
-@bot.command(name="crypto")
-async def crypto(ctx, crypto_id: str = "bitcoin"):
+@bot.tree.command(
+    name="crypto", description="Get latest crypto price data from BigQuery."
+)
+async def crypto(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
     """Get latest crypto price data from BigQuery."""
 
     with open("query/Discord Crypto Bot Data Pull v1.sql") as f:
         query = f.read()
 
-    await ctx.defer()
+    await interaction.response.defer()
     rows, error = query_bigquery(query, limit=5)
 
     if error:
-        await ctx.send(f"❌ Error querying BigQuery: {error}")
+        await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
         return
 
     if not rows:
-        await ctx.send(f"No data found for `{crypto_id}`")
+        await interaction.followup.send(f"No data found for `{crypto_id}`")
         return
 
     embed = discord.Embed(
@@ -104,52 +117,64 @@ async def crypto(ctx, crypto_id: str = "bitcoin"):
         timestamp = row.get("timestamp", "N/A")
         currency = row.get("currency", "N/A")
         price = row.get("current_price", "N/A")
-        # market_cap = row.get("market_cap", "N/A")
-        # volume = row.get("total_volume", "N/A")
 
         embed.add_field(
             name=f"⏰ {timestamp}",
-            value=f"**Currency**: {currency}\n**Price**: {price}\n",
+            value=f"**Currency**: {currency}\n**Price**: {int(price)}\n",
             inline=False,
         )
 
     embed.set_footer(
         text=f"Data from BigQuery • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    await ctx.send(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
-@bot.command(name="query")
-async def query_command(ctx, *, sql: str):
+@bot.tree.command(
+    name="query", description="Execute a custom SQL query on BigQuery (admin only)."
+)
+async def query_command(interaction: discord.Interaction, sql: str):
     """Execute a custom SQL query on BigQuery (admin only)."""
-    admin_role = os.getenv("DISCORD_ADMIN_ROLE", "admin")
-    is_admin = any(admin_role in str(role.name).lower() for role in ctx.author.roles)
+    admin_role_name = os.getenv("DISCORD_ADMIN_ROLE", "admin")
 
-    if not is_admin and not ctx.author.guild_permissions.administrator:
-        await ctx.send("❌ You don't have permission to run custom queries.")
+    # Check if user has administrator permissions or the admin role
+    is_admin = interaction.user.guild_permissions.administrator or any(
+        admin_role_name.lower() in role.name.lower() for role in interaction.user.roles
+    )
+
+    if not is_admin:
+        await interaction.response.send_message(
+            "❌ You don't have permission to run custom queries.", ephemeral=True
+        )
         return
 
     if len(sql) > 1000:
-        await ctx.send("❌ Query too long (max 1000 characters).")
+        await interaction.response.send_message(
+            "❌ Query too long (max 1000 characters).", ephemeral=True
+        )
         return
 
-    await ctx.defer()
+    await interaction.response.defer()
     rows, error = query_bigquery(sql, limit=10)
 
     if error:
-        await ctx.send(f"❌ Query error: {error}")
+        await interaction.followup.send(f"❌ Query error: {error}")
         return
 
     if not rows:
-        await ctx.send("✅ Query executed successfully. No results returned.")
+        await interaction.followup.send(
+            "✅ Query executed successfully. No results returned."
+        )
         return
 
     embed = format_results(rows, "Query Results")
-    await ctx.send(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
-@bot.command(name="community")
-async def community(ctx, crypto_id: str = "bitcoin"):
+@bot.tree.command(
+    name="community", description="Get community data for a cryptocurrency."
+)
+async def community(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
     """Get community data for a cryptocurrency."""
     project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
     dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
@@ -162,15 +187,15 @@ async def community(ctx, crypto_id: str = "bitcoin"):
         ORDER BY timestamp DESC
     """
 
-    await ctx.defer()
+    await interaction.response.defer()
     rows, error = query_bigquery(query, limit=3)
 
     if error:
-        await ctx.send(f"❌ Error querying BigQuery: {error}")
+        await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
         return
 
     if not rows:
-        await ctx.send(f"No community data found for `{crypto_id}`")
+        await interaction.followup.send(f"No community data found for `{crypto_id}`")
         return
 
     embed = discord.Embed(
@@ -194,11 +219,13 @@ async def community(ctx, crypto_id: str = "bitcoin"):
     embed.set_footer(
         text=f"Data from BigQuery • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    await ctx.send(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
-@bot.command(name="developer")
-async def developer(ctx, crypto_id: str = "bitcoin"):
+@bot.tree.command(
+    name="developer", description="Get developer activity data for a cryptocurrency."
+)
+async def developer(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
     """Get developer activity data for a cryptocurrency."""
     project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
     dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
@@ -211,15 +238,15 @@ async def developer(ctx, crypto_id: str = "bitcoin"):
         ORDER BY timestamp DESC
     """
 
-    await ctx.defer()
+    await interaction.response.defer()
     rows, error = query_bigquery(query, limit=3)
 
     if error:
-        await ctx.send(f"❌ Error querying BigQuery: {error}")
+        await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
         return
 
     if not rows:
-        await ctx.send(f"No developer data found for `{crypto_id}`")
+        await interaction.followup.send(f"No developer data found for `{crypto_id}`")
         return
 
     embed = discord.Embed(
@@ -244,11 +271,13 @@ async def developer(ctx, crypto_id: str = "bitcoin"):
     embed.set_footer(
         text=f"Data from BigQuery • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    await ctx.send(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
-@bot.command(name="list")
-async def list_cryptos(ctx):
+@bot.tree.command(
+    name="list", description="List all available cryptocurrencies in the database."
+)
+async def list_cryptos(interaction: discord.Interaction):
     """List all available cryptocurrencies in the database."""
     project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
     dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
@@ -260,15 +289,15 @@ async def list_cryptos(ctx):
         ORDER BY crypto_id
     """
 
-    await ctx.defer()
+    await interaction.response.defer()
     rows, error = query_bigquery(query, limit=50)
 
     if error:
-        await ctx.send(f"❌ Error querying BigQuery: {error}")
+        await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
         return
 
     if not rows:
-        await ctx.send("No cryptocurrencies found in the database.")
+        await interaction.followup.send("No cryptocurrencies found in the database.")
         return
 
     crypto_list = "\n".join([f"• `{row['crypto_id']}`" for row in rows])
@@ -279,7 +308,7 @@ async def list_cryptos(ctx):
         color=discord.Color.blue(),
     )
     embed.set_footer(text=f"Total: {len(rows)} cryptocurrencies")
-    await ctx.send(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
 if __name__ == "__main__":
