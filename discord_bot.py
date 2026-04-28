@@ -132,185 +132,185 @@ async def crypto(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
     await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(
-    name="query", description="Execute a custom SQL query on BigQuery (admin only)."
-)
-async def query_command(interaction: discord.Interaction, sql: str):
-    """Execute a custom SQL query on BigQuery (admin only)."""
-    admin_role_name = os.getenv("DISCORD_ADMIN_ROLE", "admin")
+# @bot.tree.command(
+#     name="query", description="Execute a custom SQL query on BigQuery (admin only)."
+# )
+# async def query_command(interaction: discord.Interaction, sql: str):
+#     """Execute a custom SQL query on BigQuery (admin only)."""
+#     admin_role_name = os.getenv("DISCORD_ADMIN_ROLE", "admin")
 
-    # Check if user has administrator permissions or the admin role
-    is_admin = interaction.user.guild_permissions.administrator or any(
-        admin_role_name.lower() in role.name.lower() for role in interaction.user.roles
-    )
+#     # Check if user has administrator permissions or the admin role
+#     is_admin = interaction.user.guild_permissions.administrator or any(
+#         admin_role_name.lower() in role.name.lower() for role in interaction.user.roles
+#     )
 
-    if not is_admin:
-        await interaction.response.send_message(
-            "❌ You don't have permission to run custom queries.", ephemeral=True
-        )
-        return
+#     if not is_admin:
+#         await interaction.response.send_message(
+#             "❌ You don't have permission to run custom queries.", ephemeral=True
+#         )
+#         return
 
-    if len(sql) > 1000:
-        await interaction.response.send_message(
-            "❌ Query too long (max 1000 characters).", ephemeral=True
-        )
-        return
+#     if len(sql) > 1000:
+#         await interaction.response.send_message(
+#             "❌ Query too long (max 1000 characters).", ephemeral=True
+#         )
+#         return
 
-    await interaction.response.defer()
-    rows, error = query_bigquery(sql, limit=10)
+#     await interaction.response.defer()
+#     rows, error = query_bigquery(sql, limit=10)
 
-    if error:
-        await interaction.followup.send(f"❌ Query error: {error}")
-        return
+#     if error:
+#         await interaction.followup.send(f"❌ Query error: {error}")
+#         return
 
-    if not rows:
-        await interaction.followup.send(
-            "✅ Query executed successfully. No results returned."
-        )
-        return
+#     if not rows:
+#         await interaction.followup.send(
+#             "✅ Query executed successfully. No results returned."
+#         )
+#         return
 
-    embed = format_results(rows, "Query Results")
-    await interaction.followup.send(embed=embed)
-
-
-@bot.tree.command(
-    name="community", description="Get community data for a cryptocurrency."
-)
-async def community(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
-    """Get community data for a cryptocurrency."""
-    project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
-    dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
-    table_name = os.getenv("BQ_COMMUNITY_TABLE", "community_data")
-
-    query = f"""
-        SELECT *
-        FROM `{project_id}.{dataset_id}.{table_name}`
-        WHERE crypto_id = '{crypto_id}'
-        ORDER BY timestamp DESC
-    """
-
-    await interaction.response.defer()
-    rows, error = query_bigquery(query, limit=3)
-
-    if error:
-        await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
-        return
-
-    if not rows:
-        await interaction.followup.send(f"No community data found for `{crypto_id}`")
-        return
-
-    embed = discord.Embed(
-        title=f"👥 {crypto_id.capitalize()} Community Stats",
-        description=f"Latest {len(rows)} record(s)",
-        color=discord.Color.green(),
-    )
-
-    for row in rows:
-        timestamp = row.get("timestamp", "N/A")
-        reddit_subs = row.get("reddit_subscribers", "N/A")
-        reddit_active = row.get("reddit_accounts_active_48h", "N/A")
-        facebook_likes = row.get("facebook_likes", "N/A")
-
-        embed.add_field(
-            name=f"⏰ {timestamp}",
-            value=f"**Reddit Subscribers**: {reddit_subs}\n**Active (48h)**: {reddit_active}\n**Facebook Likes**: {facebook_likes}",
-            inline=False,
-        )
-
-    embed.set_footer(
-        text=f"Data from BigQuery • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-    await interaction.followup.send(embed=embed)
+#     embed = format_results(rows, "Query Results")
+#     await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(
-    name="developer", description="Get developer activity data for a cryptocurrency."
-)
-async def developer(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
-    """Get developer activity data for a cryptocurrency."""
-    project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
-    dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
-    table_name = os.getenv("BQ_DEVELOPER_TABLE", "developer_data")
+# @bot.tree.command(
+#     name="community", description="Get community data for a cryptocurrency."
+# )
+# async def community(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
+#     """Get community data for a cryptocurrency."""
+#     project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
+#     dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
+#     table_name = os.getenv("BQ_COMMUNITY_TABLE", "community_data")
 
-    query = f"""
-        SELECT *
-        FROM `{project_id}.{dataset_id}.{table_name}`
-        WHERE crypto_id = '{crypto_id}'
-        ORDER BY timestamp DESC
-    """
+#     query = f"""
+#         SELECT *
+#         FROM `{project_id}.{dataset_id}.{table_name}`
+#         WHERE crypto_id = '{crypto_id}'
+#         ORDER BY timestamp DESC
+#     """
 
-    await interaction.response.defer()
-    rows, error = query_bigquery(query, limit=3)
+#     await interaction.response.defer()
+#     rows, error = query_bigquery(query, limit=3)
 
-    if error:
-        await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
-        return
+#     if error:
+#         await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
+#         return
 
-    if not rows:
-        await interaction.followup.send(f"No developer data found for `{crypto_id}`")
-        return
+#     if not rows:
+#         await interaction.followup.send(f"No community data found for `{crypto_id}`")
+#         return
 
-    embed = discord.Embed(
-        title=f"💻 {crypto_id.capitalize()} Developer Activity",
-        description=f"Latest {len(rows)} record(s)",
-        color=discord.Color.purple(),
-    )
+#     embed = discord.Embed(
+#         title=f"👥 {crypto_id.capitalize()} Community Stats",
+#         description=f"Latest {len(rows)} record(s)",
+#         color=discord.Color.green(),
+#     )
 
-    for row in rows:
-        timestamp = row.get("timestamp", "N/A")
-        stars = row.get("stars", "N/A")
-        forks = row.get("forks", "N/A")
-        commits = row.get("commit_count_4_weeks", "N/A")
-        prs_merged = row.get("pull_requests_merged", "N/A")
+#     for row in rows:
+#         timestamp = row.get("timestamp", "N/A")
+#         reddit_subs = row.get("reddit_subscribers", "N/A")
+#         reddit_active = row.get("reddit_accounts_active_48h", "N/A")
+#         facebook_likes = row.get("facebook_likes", "N/A")
 
-        embed.add_field(
-            name=f"⏰ {timestamp}",
-            value=f"**Stars**: {stars}\n**Forks**: {forks}\n**Commits (4w)**: {commits}\n**PRs Merged**: {prs_merged}",
-            inline=False,
-        )
+#         embed.add_field(
+#             name=f"⏰ {timestamp}",
+#             value=f"**Reddit Subscribers**: {reddit_subs}\n**Active (48h)**: {reddit_active}\n**Facebook Likes**: {facebook_likes}",
+#             inline=False,
+#         )
 
-    embed.set_footer(
-        text=f"Data from BigQuery • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-    await interaction.followup.send(embed=embed)
+#     embed.set_footer(
+#         text=f"Data from BigQuery • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+#     )
+#     await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(
-    name="list", description="List all available cryptocurrencies in the database."
-)
-async def list_cryptos(interaction: discord.Interaction):
-    """List all available cryptocurrencies in the database."""
-    project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
-    dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
-    table_name = os.getenv("BQ_MARKET_TABLE", "market_data")
+# @bot.tree.command(
+#     name="developer", description="Get developer activity data for a cryptocurrency."
+# )
+# async def developer(interaction: discord.Interaction, crypto_id: str = "bitcoin"):
+#     """Get developer activity data for a cryptocurrency."""
+#     project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
+#     dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
+#     table_name = os.getenv("BQ_DEVELOPER_TABLE", "developer_data")
 
-    query = f"""
-        SELECT DISTINCT crypto_id
-        FROM `{project_id}.{dataset_id}.{table_name}`
-        ORDER BY crypto_id
-    """
+#     query = f"""
+#         SELECT *
+#         FROM `{project_id}.{dataset_id}.{table_name}`
+#         WHERE crypto_id = '{crypto_id}'
+#         ORDER BY timestamp DESC
+#     """
 
-    await interaction.response.defer()
-    rows, error = query_bigquery(query, limit=50)
+#     await interaction.response.defer()
+#     rows, error = query_bigquery(query, limit=3)
 
-    if error:
-        await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
-        return
+#     if error:
+#         await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
+#         return
 
-    if not rows:
-        await interaction.followup.send("No cryptocurrencies found in the database.")
-        return
+#     if not rows:
+#         await interaction.followup.send(f"No developer data found for `{crypto_id}`")
+#         return
 
-    crypto_list = "\n".join([f"• `{row['crypto_id']}`" for row in rows])
+#     embed = discord.Embed(
+#         title=f"💻 {crypto_id.capitalize()} Developer Activity",
+#         description=f"Latest {len(rows)} record(s)",
+#         color=discord.Color.purple(),
+#     )
 
-    embed = discord.Embed(
-        title="🪙 Available Cryptocurrencies",
-        description=crypto_list,
-        color=discord.Color.blue(),
-    )
-    embed.set_footer(text=f"Total: {len(rows)} cryptocurrencies")
-    await interaction.followup.send(embed=embed)
+#     for row in rows:
+#         timestamp = row.get("timestamp", "N/A")
+#         stars = row.get("stars", "N/A")
+#         forks = row.get("forks", "N/A")
+#         commits = row.get("commit_count_4_weeks", "N/A")
+#         prs_merged = row.get("pull_requests_merged", "N/A")
+
+#         embed.add_field(
+#             name=f"⏰ {timestamp}",
+#             value=f"**Stars**: {stars}\n**Forks**: {forks}\n**Commits (4w)**: {commits}\n**PRs Merged**: {prs_merged}",
+#             inline=False,
+#         )
+
+#     embed.set_footer(
+#         text=f"Data from BigQuery • {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+#     )
+#     await interaction.followup.send(embed=embed)
+
+
+# @bot.tree.command(
+#     name="list", description="List all available cryptocurrencies in the database."
+# )
+# async def list_cryptos(interaction: discord.Interaction):
+#     """List all available cryptocurrencies in the database."""
+#     project_id = os.getenv("GCP_PROJECT_ID", "discord-bot-484904")
+#     dataset_id = os.getenv("BQ_DATASET_ID", "crypto_bot")
+#     table_name = os.getenv("BQ_MARKET_TABLE", "market_data")
+
+#     query = f"""
+#         SELECT DISTINCT crypto_id
+#         FROM `{project_id}.{dataset_id}.{table_name}`
+#         ORDER BY crypto_id
+#     """
+
+#     await interaction.response.defer()
+#     rows, error = query_bigquery(query, limit=50)
+
+#     if error:
+#         await interaction.followup.send(f"❌ Error querying BigQuery: {error}")
+#         return
+
+#     if not rows:
+#         await interaction.followup.send("No cryptocurrencies found in the database.")
+#         return
+
+#     crypto_list = "\n".join([f"• `{row['crypto_id']}`" for row in rows])
+
+#     embed = discord.Embed(
+#         title="🪙 Available Cryptocurrencies",
+#         description=crypto_list,
+#         color=discord.Color.blue(),
+#     )
+#     embed.set_footer(text=f"Total: {len(rows)} cryptocurrencies")
+#     await interaction.followup.send(embed=embed)
 
 
 @bot.tree.command(
