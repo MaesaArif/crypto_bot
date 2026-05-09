@@ -5,9 +5,9 @@ import os
 from datetime import datetime
 import argparse
 import pandas as pd
+import time
 
 from utils import upload_file_to_gcs
-
 
 # loading .env
 load_dotenv()
@@ -129,19 +129,33 @@ def daily_api_call(crypto_list: list, batch_id: str = "7AM"):
 
         headers = {"x-cg-api-key": api_key}
 
-        # calling api
-        response = requests.get(url, headers=headers)
+        while True:
+            # calling api
+            response = requests.get(url, headers=headers)
 
-        if response.status_code != 200:
-            print(
-                f"API request failed for {crypto} with status code {response.status_code}: {response.text}"
+            if response.status_code == 429:
+                print(
+                    f"Rate limit exceeded (429) for {crypto}. Sleeping for 60 seconds..."
+                )
+                time.sleep(60)
+                continue
+
+            if response.status_code != 200:
+                print(
+                    f"API request failed for {crypto} with status code {response.status_code}: {response.text}"
+                )
+                break
+
+            data = response.json()
+            market_data_df = process_market_data(data, market_data_df, batch_id)
+            community_data_df = process_community_data(
+                data, community_data_df, batch_id
             )
-            continue
-
-        data = response.json()
-        market_data_df = process_market_data(data, market_data_df, batch_id)
-        community_data_df = process_community_data(data, community_data_df, batch_id)
-        developer_data_df = process_developer_data(data, developer_data_df, batch_id)
+            developer_data_df = process_developer_data(
+                data, developer_data_df, batch_id
+            )
+            print(f"Pulling data from coin gecko: {crypto} completed!")
+            break
 
     market_data_df_PATH = f"output/crypto_data_{current_date}_BATCH_{batch_id}.ndjson"
     market_data_df.to_json(
@@ -175,8 +189,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # crypto_list = ["bitcoin", "ethereum", "dogecoin"]
-    crypto_list = ["bitcoin", "ethereum"]
+    # Coin API ID from coingecko.com
+    crypto_list = [
+        "bitcoin",
+        "ethereum",
+        "tether",
+        "ripple",
+        "binancecoin",
+        "usd-coin",
+        "solana",
+        "tron",
+        "figure-heloc",
+        "dogecoin",
+    ]
     batch_id = args.batch
     PATHS = daily_api_call(crypto_list, batch_id)
 
