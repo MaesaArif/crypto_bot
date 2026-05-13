@@ -1,6 +1,6 @@
 crypto_bot/.env
 .DS_Store
-./output
+output/**
 # Python virtual environment
 .venv/
 __pycache__/
