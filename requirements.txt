@@ -4,3 +4,4 @@ pandas==3.0.0
 google-cloud-storage==3.9.0
 google-cloud-bigquery==3.25.0
 discord.py==2.4.0
+matplotlib==3.10.9
