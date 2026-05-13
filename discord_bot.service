@@ -1,0 +1,17 @@
+[Unit]
+Description=Discord Crypto Bot
+After=network.target
+
+[Service]
+User=f_devin_ahmad
+Group=f_devin_ahmad
+WorkingDirectory=/home/f_devin_ahmad/crypto_bot
+EnvironmentFile=/home/f_devin_ahmad/crypto_bot/secret/.env
+ExecStart=/home/f_devin_ahmad/crypto_bot/.venv/bin/python3 discord_bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
