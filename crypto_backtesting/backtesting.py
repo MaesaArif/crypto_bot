@@ -7,7 +7,7 @@ import pandas as pd
 
 # import seaborn as sns
 
-# from utils import upload_file_to_gcs
+# from utils.gcs import upload_file_to_gcs
 
 
 def process_yf_ticker_data(data, df, ticker, df_columns):

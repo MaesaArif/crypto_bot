@@ -7,7 +7,7 @@ import argparse
 import pandas as pd
 import time
 
-from utils import upload_file_to_gcs
+from utils.gcs import upload_file_to_gcs
 
 # loading .env
 load_dotenv()
