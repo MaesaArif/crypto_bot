@@ -2,12 +2,19 @@ from datetime import datetime
 import numpy as np
 import yfinance as yf
 import pandas as pd
+import sys
+import os
+from pathlib import Path
+
+# Add project root to sys.path
+root_path = Path(__file__).parent.parent
+sys.path.append(str(root_path))
 
 # import matplotlib.pyplot as plt
 
 # import seaborn as sns
 
-# from utils.gcs import upload_file_to_gcs
+from utils.gcs import upload_file_to_gcs
 
 
 def process_yf_ticker_data(data, df, ticker, df_columns):
@@ -44,7 +51,7 @@ def yf_ticker_pull(tickers):
         orient="records",
         lines=True,
     )
-    return yfinance_df
+    return yfinance_df, yfinance_df_PATH
 
 
 def train_arima(df):
@@ -80,7 +87,17 @@ def validation(model_fit, exogenous_features, data):
 
 def main():
     tickers = ["GOOGL", "BTC-USD"]
-    datas = yf_ticker_pull(tickers)
+    datas, yfinance_df_PATH = yf_ticker_pull(tickers)
+
+    # upload ndjson to gcs
+    try:
+        credentials_path = "secret/discord-bot-484904-2dc07a5b046e.json"  # NOTE: hardcoded credential, use more secure method before production
+        # create new folder each day
+        gcs_uri = "gs://historical_price_prediction/historical/"
+        upload_file_to_gcs(yfinance_df_PATH, gcs_uri, credentials_path)
+    except Exception as e:
+        print("error when uploading ndjson to GCS")
+        print(e)
 
 
 if __name__ == "__main__":
