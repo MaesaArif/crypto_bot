@@ -1,3 +1,7 @@
+import warnings
+
+warnings.filterwarnings("ignore")
+
 from datetime import datetime
 import numpy as np
 import yfinance as yf
@@ -5,6 +9,8 @@ import pandas as pd
 import sys
 import os
 from pathlib import Path
+import statsmodels.api as sm
+from sklearn.metrics import root_mean_squared_error
 
 # Add project root to sys.path
 root_path = Path(__file__).parent.parent
@@ -22,7 +28,8 @@ def process_yf_ticker_data(data, df, ticker, df_columns):
     # Shift the data in the dataframe by one row
     df_tmp = df_tmp.shift(1)
     # add timestamp and ticker column
-    df_tmp["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+    df_tmp = df_tmp.reset_index(names="timestamp")
+    df_tmp["timestamp"] = df_tmp["timestamp"].dt.strftime("%Y-%m-%d %H:%M")
     df_tmp["ticker"] = ticker
     # Select the columns
     df_tmp = df_tmp[df_columns].iloc[2:]
@@ -55,6 +62,10 @@ def yf_ticker_pull(tickers):
 
 
 def train_arima(df):
+    # Ensure columns are numeric to avoid "Pandas data cast to numpy dtype of object" error
+    numeric_cols = ["Open", "High", "Low", "Close"]
+    df[numeric_cols] = df[numeric_cols].astype(float)
+
     # pre-process GOOGL
     year_split = 2020
     train = df[df.index.year < year_split]
@@ -69,9 +80,9 @@ def train_arima(df):
         endog=train["Close"], exog=train[exogenous_features], order=(1, 1, 1)
     )  # (p,d,q)
     model_fit = model.fit()
-    # model_fit.summary()
+    print(model_fit.summary())
 
-    return model_fit
+    return model_fit, exogenous_features, train, test
 
 
 def validation(model_fit, exogenous_features, data):
@@ -81,23 +92,33 @@ def validation(model_fit, exogenous_features, data):
         for i in range(len(data))
     ]
     data["Forecast"] = forecast
-    rmse = np.sqrt(mean_squared_error(data["Close"], data["Forecast"]))
-    return rmse
+    rmse = root_mean_squared_error(data["Close"], data["Forecast"])
+    print(rmse)
 
 
 def main():
     tickers = ["GOOGL", "BTC-USD"]
     datas, yfinance_df_PATH = yf_ticker_pull(tickers)
 
-    # upload ndjson to gcs
-    try:
-        credentials_path = "secret/discord-bot-484904-2dc07a5b046e.json"  # NOTE: hardcoded credential, use more secure method before production
-        # create new folder each day
-        gcs_uri = "gs://historical_price_prediction/historical/"
-        upload_file_to_gcs(yfinance_df_PATH, gcs_uri, credentials_path)
-    except Exception as e:
-        print("error when uploading ndjson to GCS")
-        print(e)
+    # # upload ndjson to gcs
+    # try:
+    #     credentials_path = "secret/discord-bot-484904-2dc07a5b046e.json"  # NOTE: hardcoded credential, use more secure method before production
+    #     # create new folder each day
+    #     gcs_uri = "gs://historical_price_prediction/historical/"
+    #     upload_file_to_gcs(yfinance_df_PATH, gcs_uri, credentials_path)
+    # except Exception as e:
+    #     print("error when uploading ndjson to GCS")
+    #     print(e)
+
+    # TODO: Pull training data from BigQ
+
+    # ARIMA Training and Validation, temporarily using datas, later use query from BigQ
+    google_df = datas[datas["ticker"] == "GOOGL"]
+    google_df = google_df[["timestamp", "Open", "High", "Low", "Close"]].iloc[:]
+    google_df["timestamp"] = pd.to_datetime(google_df["timestamp"])
+    google_df.set_index("timestamp", inplace=True)
+    model_fit, exogenous_features, _, test = train_arima(google_df)
+    validation(model_fit, exogenous_features, test)
 
 
 if __name__ == "__main__":
