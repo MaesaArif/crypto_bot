@@ -28,3 +28,14 @@ To run the discord bot as a background service:
     ```bash
     sudo journalctl -u discord_bot -f
     ```
+
+# Yahoo Finance Data Pull
+
+The `crypto_backtesting/yf_ticker.py` script fetches daily or historical market data (Crypto/Stocks) from Yahoo Finance and uploads the resulting `.ndjson` files to Google Cloud Storage.
+
+### Manual Run
+To execute the data pull manually, first ensure the script is executable, then run it:
+```bash
+chmod +x run_yf_ticker.sh
+./run_yf_ticker.sh
+```
