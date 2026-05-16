@@ -96,6 +96,8 @@ def validation(model_fit, exogenous_features, data):
     print(rmse)
 
 
+# TODO: predicting stock and crypto use different approach. Predicting tomorrow stock closing price happend after market close, using historical data (30-60 days)
+# since crypto market do not close, it should be handled differenty, for now we assume stock approach.
 def main():
     tickers = ["GOOGL", "BTC-USD"]
     datas, yfinance_df_PATH = yf_ticker_pull(tickers)
